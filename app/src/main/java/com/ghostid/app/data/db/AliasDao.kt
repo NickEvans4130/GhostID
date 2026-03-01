@@ -55,6 +55,9 @@ interface AliasDao {
     @Query("DELETE FROM accounts WHERE aliasId = :aliasId")
     suspend fun deleteAccountsForAlias(aliasId: String)
 
+    @Query("UPDATE accounts SET status = :status, accountCreatedAt = :createdAt WHERE id = :accountId")
+    suspend fun updateAccountStatus(accountId: String, status: String, createdAt: Long?)
+
     @Transaction
     suspend fun replaceAccountsForAlias(aliasId: String, accounts: List<AccountEntity>) {
         deleteAccountsForAlias(aliasId)
@@ -68,4 +71,18 @@ interface AliasDao {
         GROUP BY username HAVING COUNT(*) > 1
     """)
     suspend fun findDuplicateUsernames(): List<String>
+
+    // --- Temp email operations ---
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertTempEmail(entity: TempEmailEntity)
+
+    @Query("SELECT * FROM temp_emails WHERE aliasId = :aliasId")
+    suspend fun getTempEmail(aliasId: String): TempEmailEntity?
+
+    @Query("DELETE FROM temp_emails WHERE aliasId = :aliasId")
+    suspend fun deleteTempEmail(aliasId: String)
+
+    @Query("UPDATE temp_emails SET encryptedToken = :encryptedToken WHERE aliasId = :aliasId")
+    suspend fun updateTempEmailToken(aliasId: String, encryptedToken: String)
 }

@@ -8,4 +8,6 @@ data class Account(
     val platform: Platform,
     val username: String,
     val password: String,
+    val status: AccountStatus = AccountStatus.PENDING,
+    val accountCreatedAt: Long? = null,
 )

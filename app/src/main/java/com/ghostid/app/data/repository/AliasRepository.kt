@@ -5,6 +5,7 @@ import com.ghostid.app.data.db.AccountEntity
 import com.ghostid.app.data.db.AliasDao
 import com.ghostid.app.data.db.AliasEntity
 import com.ghostid.app.domain.model.Account
+import com.ghostid.app.domain.model.AccountStatus
 import com.ghostid.app.domain.model.Alias
 import com.ghostid.app.domain.model.AliasAddress
 import com.ghostid.app.domain.model.AliasName
@@ -121,6 +122,8 @@ class AliasRepository @Inject constructor(
             platform = runCatching { Platform.valueOf(platformName) }.getOrDefault(Platform.EMAIL_PROTON),
             username = username,
             password = runCatching { crypto.decrypt(passwordEncrypted) }.getOrDefault(""),
+            status = runCatching { AccountStatus.valueOf(status) }.getOrDefault(AccountStatus.PENDING),
+            accountCreatedAt = accountCreatedAt,
         )
 
     private fun Alias.toEntity(crypto: CryptoManager): AliasEntity =
@@ -154,5 +157,11 @@ class AliasRepository @Inject constructor(
             platformName = platform.name,
             username = username,
             passwordEncrypted = runCatching { crypto.encrypt(password) }.getOrDefault(password),
+            status = status.name,
+            accountCreatedAt = accountCreatedAt,
         )
+
+    suspend fun updateAccountStatus(accountId: String, status: AccountStatus, createdAt: Long?) {
+        dao.updateAccountStatus(accountId, status.name, createdAt)
+    }
 }
