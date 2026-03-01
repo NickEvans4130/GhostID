@@ -131,7 +131,17 @@ class AliasGenerator @Inject constructor(
         val dialCode = countryDialCodes[country] ?: "+1"
         val phoneNumber = generatePhoneNumber(dialCode)
 
-        val pronoun = if (rng.nextBoolean()) "They" else if (rng.nextBoolean()) "She" else "He"
+        // Gender drives both the bio pronoun and the age-matched face API request
+        val gender = when (rng.nextInt(3)) {
+            0 -> "female"
+            1 -> "male"
+            else -> "neutral"
+        }
+        val pronoun = when (gender) {
+            "female" -> "She"
+            "male" -> "He"
+            else -> "They"
+        }
         val bio = bioTemplates[rng.nextInt(bioTemplates.size)]
             .replace("{name}", firstName)
             .replace("{occupation}", occupation.lowercase())
@@ -150,6 +160,7 @@ class AliasGenerator @Inject constructor(
             starSign = starSign,
             bloodType = bloodType,
             bio = bio,
+            gender = gender,
             photoPath = null,
             accentColorInt = accentColor,
         )
