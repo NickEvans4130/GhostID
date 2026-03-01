@@ -23,6 +23,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.ghostid.app.presentation.ui.screens.AliasDetailScreen
 import com.ghostid.app.presentation.ui.screens.MainScreen
+import com.ghostid.app.presentation.ui.screens.MessageDetailScreen
 import com.ghostid.app.presentation.ui.screens.PasswordVaultScreen
 import com.ghostid.app.presentation.ui.screens.SettingsScreen
 
@@ -85,7 +86,21 @@ fun NavGraph() {
                 route = Screen.AliasDetail.route,
                 arguments = listOf(navArgument("aliasId") { type = NavType.StringType }),
             ) {
-                AliasDetailScreen(onNavigateBack = { navController.popBackStack() })
+                AliasDetailScreen(
+                    onNavigateBack = { navController.popBackStack() },
+                    onNavigateToMessage = { aliasId, messageId ->
+                        navController.navigate(Screen.MessageDetail.createRoute(aliasId, messageId))
+                    },
+                )
+            }
+            composable(
+                route = Screen.MessageDetail.route,
+                arguments = listOf(
+                    navArgument("aliasId") { type = NavType.StringType },
+                    navArgument("messageId") { type = NavType.StringType },
+                ),
+            ) {
+                MessageDetailScreen(onNavigateBack = { navController.popBackStack() })
             }
             composable(Screen.PasswordVault.route) {
                 PasswordVaultScreen()
