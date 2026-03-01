@@ -98,8 +98,9 @@ dependencies {
     // QR Code
     implementation(libs.zxing.core)
 
-    // Biometric
+    // Biometric + AppCompat (BiometricPrompt requires FragmentActivity)
     implementation(libs.androidx.biometric)
+    implementation(libs.androidx.appcompat)
 
     // WorkManager (clipboard auto-clear)
     implementation(libs.androidx.work.runtime.ktx)
