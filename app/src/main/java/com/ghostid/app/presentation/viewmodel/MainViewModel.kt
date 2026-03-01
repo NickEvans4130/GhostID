@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ghostid.app.data.repository.AliasRepository
 import com.ghostid.app.domain.model.Alias
+import com.ghostid.app.domain.model.HealthCheckWarning
 import com.ghostid.app.domain.usecase.CreateAliasUseCase
 import com.ghostid.app.domain.usecase.DeleteAliasUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -34,12 +35,16 @@ class MainViewModel @Inject constructor(
     private val _selectedTabIndex = MutableStateFlow(0)
     val selectedTabIndex: StateFlow<Int> = _selectedTabIndex.asStateFlow()
 
-    private val _duplicateWarning = MutableStateFlow(false)
-    val duplicateWarning: StateFlow<Boolean> = _duplicateWarning.asStateFlow()
+    private val _healthWarnings = MutableStateFlow<List<HealthCheckWarning>>(emptyList())
+    val healthWarnings: StateFlow<List<HealthCheckWarning>> = _healthWarnings.asStateFlow()
 
     init {
         repository.observeAllAliases()
-            .onEach { _aliases.value = it }
+            .onEach { list ->
+                _aliases.value = list
+                // Re-run health check automatically whenever aliases or accounts change
+                runHealthCheck()
+            }
             .launchIn(viewModelScope)
     }
 
@@ -67,13 +72,12 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    fun runHealthCheck() {
+    private fun runHealthCheck() {
         viewModelScope.launch {
-            val duplicates = repository.findDuplicateUsernames()
-            _duplicateWarning.value = duplicates.isNotEmpty()
+            _healthWarnings.value = repository.runHealthCheck()
         }
     }
 
+    fun dismissHealthWarnings() { _healthWarnings.value = emptyList() }
     fun dismissError() { _error.value = null }
-    fun dismissDuplicateWarning() { _duplicateWarning.value = false }
 }

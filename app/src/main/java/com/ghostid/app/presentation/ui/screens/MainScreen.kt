@@ -1,6 +1,8 @@
 package com.ghostid.app.presentation.ui.screens
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -15,25 +17,29 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ExpandLess
+import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -41,15 +47,19 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.ghostid.app.domain.model.Alias
+import com.ghostid.app.domain.model.HealthCheckWarning
 import com.ghostid.app.domain.model.toComposeColor
 import com.ghostid.app.presentation.ui.components.AliasAvatarImage
 import com.ghostid.app.presentation.viewmodel.MainViewModel
@@ -63,7 +73,7 @@ fun MainScreen(
     val aliases by viewModel.aliases.collectAsState()
     val isCreating by viewModel.isCreating.collectAsState()
     val error by viewModel.error.collectAsState()
-    val duplicateWarning by viewModel.duplicateWarning.collectAsState()
+    val healthWarnings by viewModel.healthWarnings.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(error) {
@@ -76,8 +86,24 @@ fun MainScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = {
-                    Text("GhostID", fontWeight = FontWeight.Bold)
+                title = { Text("GhostID", fontWeight = FontWeight.Bold) },
+                actions = {
+                    if (healthWarnings.isNotEmpty()) {
+                        IconButton(onClick = {}) {
+                            Icon(
+                                Icons.Default.Warning,
+                                contentDescription = "${healthWarnings.size} health warning(s)",
+                                tint = MaterialTheme.colorScheme.error,
+                            )
+                        }
+                    } else {
+                        Icon(
+                            Icons.Default.Shield,
+                            contentDescription = "No issues detected",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.padding(end = 16.dp),
+                        )
+                    }
                 },
             )
         },
@@ -94,30 +120,15 @@ fun MainScreen(
     ) { padding ->
         Column(modifier = Modifier.fillMaxSize().padding(padding)) {
 
-            AnimatedVisibility(visible = duplicateWarning) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(MaterialTheme.colorScheme.errorContainer)
-                        .padding(horizontal = 16.dp, vertical = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Icon(
-                        Icons.Default.Warning,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onErrorContainer,
-                    )
-                    Spacer(Modifier.width(8.dp))
-                    Text(
-                        "Duplicate username detected across aliases",
-                        color = MaterialTheme.colorScheme.onErrorContainer,
-                        style = MaterialTheme.typography.bodySmall,
-                        modifier = Modifier.weight(1f),
-                    )
-                    TextButton(onClick = { viewModel.dismissDuplicateWarning() }) {
-                        Text("Dismiss")
-                    }
-                }
+            AnimatedVisibility(
+                visible = healthWarnings.isNotEmpty(),
+                enter = expandVertically(),
+                exit = shrinkVertically(),
+            ) {
+                HealthCheckBanner(
+                    warnings = healthWarnings,
+                    onDismiss = viewModel::dismissHealthWarnings,
+                )
             }
 
             if (aliases.isEmpty() && !isCreating) {
@@ -143,6 +154,108 @@ fun MainScreen(
                     isCreating = isCreating,
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun HealthCheckBanner(
+    warnings: List<HealthCheckWarning>,
+    onDismiss: () -> Unit,
+) {
+    var expanded by rememberSaveable { mutableStateOf(false) }
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 12.dp, vertical = 6.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
+        shape = RoundedCornerShape(12.dp),
+    ) {
+        Column(modifier = Modifier.padding(12.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Icon(
+                    Icons.Default.Warning,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onErrorContainer,
+                    modifier = Modifier.size(18.dp),
+                )
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    "${warnings.size} duplicate username${if (warnings.size > 1) "s" else ""} detected",
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onErrorContainer,
+                    modifier = Modifier.weight(1f),
+                )
+                IconButton(
+                    onClick = { expanded = !expanded },
+                    modifier = Modifier.size(28.dp),
+                ) {
+                    Icon(
+                        if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                        contentDescription = if (expanded) "Collapse" else "Show details",
+                        tint = MaterialTheme.colorScheme.onErrorContainer,
+                    )
+                }
+            }
+
+            AnimatedVisibility(visible = expanded) {
+                Column(modifier = Modifier.padding(top = 8.dp)) {
+                    HorizontalDivider(color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.2f))
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        "These usernames appear across multiple aliases. Regenerate affected accounts to fix.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.8f),
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    warnings.forEach { warning ->
+                        HealthWarningRow(warning)
+                        Spacer(Modifier.height(6.dp))
+                    }
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.End,
+                    ) {
+                        TextButton(onClick = onDismiss) {
+                            Text(
+                                "Dismiss",
+                                color = MaterialTheme.colorScheme.onErrorContainer,
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun HealthWarningRow(warning: HealthCheckWarning) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(8.dp))
+            .background(MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.08f))
+            .padding(8.dp),
+    ) {
+        Text(
+            warning.duplicateValue,
+            style = MaterialTheme.typography.labelMedium.copy(fontFamily = FontFamily.Monospace),
+            color = MaterialTheme.colorScheme.onErrorContainer,
+            fontWeight = FontWeight.Bold,
+        )
+        Spacer(Modifier.height(2.dp))
+        warning.affectedAliases.forEach { alias ->
+            Text(
+                "  $alias",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.75f),
+            )
         }
     }
 }
