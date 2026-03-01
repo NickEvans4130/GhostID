@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <network-security-config>
     <domain-config cleartextTrafficPermitted="false">
-        <domain includeSubdomains="true">fakeface.rest</domain>
-        <domain includeSubdomains="true">content.fakeface.rest</domain>
-        <domain includeSubdomains="false">api.dicebear.com</domain>
-        <domain includeSubdomains="false">api.mail.tm</domain>
+        <domain includeSubdomains="true">randomuser.me</domain>
+        <domain includeSubdomains="true">thispersondoesnotexist.com</domain>
+        <domain includeSubdomains="true">api.dicebear.com</domain>
+        <domain includeSubdomains="true">api.mail.tm</domain>
     </domain-config>
 </network-security-config>

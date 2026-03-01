@@ -1,6 +1,7 @@
 package com.ghostid.app.di
 
 import com.ghostid.app.data.network.MailTmService
+import com.ghostid.app.data.network.RandomUserService
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -28,6 +29,21 @@ object NetworkModule {
                 }
             )
             .build()
+
+    @Provides
+    @Singleton
+    fun provideRandomUserService(): RandomUserService =
+        Retrofit.Builder()
+            .baseUrl("https://randomuser.me")
+            .addConverterFactory(GsonConverterFactory.create())
+            .client(
+                OkHttpClient.Builder()
+                    .connectTimeout(10, TimeUnit.SECONDS)
+                    .readTimeout(10, TimeUnit.SECONDS)
+                    .build()
+            )
+            .build()
+            .create(RandomUserService::class.java)
 
     @Provides
     @Singleton
