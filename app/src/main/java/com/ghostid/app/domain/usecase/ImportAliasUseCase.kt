@@ -42,6 +42,7 @@ class ImportAliasUseCase @Inject constructor(
             starSign = data.starSign,
             bloodType = data.bloodType,
             bio = data.bio,
+            gender = data.gender.ifBlank { "neutral" },
             photoPath = null,
             accentColorInt = accentColor,
             accounts = data.accounts.map { acc ->

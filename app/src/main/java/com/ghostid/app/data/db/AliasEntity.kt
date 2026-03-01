@@ -23,6 +23,7 @@ data class AliasEntity(
     val starSign: String,
     val bloodType: String,
     val bioEncrypted: String,          // AES-256-GCM encrypted
+    val gender: String,               // "male", "female", or "neutral"
     val photoPath: String?,
     val accentColorInt: Int,
     val tags: List<String>,            // stored as JSON via Converters

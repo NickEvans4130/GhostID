@@ -27,6 +27,7 @@ data class Alias(
     val starSign: String,
     val bloodType: String,
     val bio: String,
+    val gender: String,               // "male", "female", or "neutral"
     val photoPath: String?,           // absolute path to cached face JPEG, null = use avatar
     val accentColorInt: Int,          // ARGB int from aliasAccentColors
     val accounts: List<Account> = emptyList(),

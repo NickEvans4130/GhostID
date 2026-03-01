@@ -29,6 +29,7 @@ data class AliasExportData(
     val starSign: String,
     val bloodType: String,
     val bio: String,
+    val gender: String,
     val accounts: List<AccountExportData>,
     val tags: List<String>,
     val notes: String,
@@ -80,6 +81,7 @@ class ExportAliasUseCase @Inject constructor(
             starSign = starSign,
             bloodType = bloodType,
             bio = bio,
+            gender = gender,
             accounts = accounts.map { acc ->
                 AccountExportData(
                     platform = acc.platform.name,

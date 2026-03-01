@@ -8,6 +8,7 @@ import com.ghostid.app.domain.model.Account
 import com.ghostid.app.domain.model.Alias
 import com.ghostid.app.domain.model.AliasAddress
 import com.ghostid.app.domain.model.AliasName
+import com.ghostid.app.domain.model.HealthCheckWarning
 import com.ghostid.app.domain.model.Platform
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -55,7 +56,40 @@ class AliasRepository @Inject constructor(
         }
     }
 
-    suspend fun findDuplicateUsernames(): List<String> = dao.findDuplicateUsernames()
+    /**
+     * Scans all alias accounts for usernames that appear across more than one alias.
+     * Usernames that are shared between accounts of the same alias (impossible by design) are ignored.
+     * Returns a structured list of warnings with the duplicate value and which aliases are affected.
+     */
+    suspend fun runHealthCheck(): List<HealthCheckWarning> {
+        val aliases = getAllAliases()
+
+        // Map of lowercase username -> list of "Alias Name (Platform)" strings
+        val usernameToOwners = mutableMapOf<String, MutableList<Pair<String, String>>>()
+
+        for (alias in aliases) {
+            for (account in alias.accounts) {
+                val key = account.username.trim().lowercase()
+                if (key.isEmpty()) continue
+                usernameToOwners
+                    .getOrPut(key) { mutableListOf() }
+                    .add(alias.name.full to account.platform.displayName)
+            }
+        }
+
+        return usernameToOwners
+            .filter { (_, owners) ->
+                // Only warn if the username appears in accounts belonging to different aliases
+                owners.map { it.first }.distinct().size > 1
+            }
+            .map { (username, owners) ->
+                HealthCheckWarning(
+                    duplicateValue = username,
+                    affectedAliases = owners.map { (name, platform) -> "$name ($platform)" },
+                )
+            }
+            .sortedBy { it.duplicateValue }
+    }
 
     // --- Mapping helpers ---
 
@@ -71,6 +105,7 @@ class AliasRepository @Inject constructor(
             starSign = starSign,
             bloodType = bloodType,
             bio = runCatching { crypto.decrypt(bioEncrypted) }.getOrDefault(bioEncrypted),
+            gender = gender,
             photoPath = photoPath,
             accentColorInt = accentColorInt,
             accounts = accountEntities.map { it.toDomain(crypto) },
@@ -104,6 +139,7 @@ class AliasRepository @Inject constructor(
             starSign = starSign,
             bloodType = bloodType,
             bioEncrypted = runCatching { crypto.encrypt(bio) }.getOrDefault(bio),
+            gender = gender,
             photoPath = photoPath,
             accentColorInt = accentColorInt,
             tags = tags,
