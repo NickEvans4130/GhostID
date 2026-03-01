@@ -5,8 +5,8 @@ import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 
 @Database(
-    entities = [AliasEntity::class, AccountEntity::class],
-    version = 2,
+    entities = [AliasEntity::class, AccountEntity::class, TempEmailEntity::class],
+    version = 3,
     exportSchema = false,
 )
 @TypeConverters(Converters::class)

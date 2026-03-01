@@ -7,10 +7,13 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ghostid.app.data.repository.AliasRepository
+import com.ghostid.app.domain.model.Account
+import com.ghostid.app.domain.model.AccountStatus
 import com.ghostid.app.domain.model.Alias
 import com.ghostid.app.domain.usecase.DeleteAliasUseCase
 import com.ghostid.app.domain.usecase.ExportAliasUseCase
 import com.ghostid.app.utils.ClipboardClearService
+import com.ghostid.app.utils.DeepLinkLauncher
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -25,6 +28,7 @@ class AliasDetailViewModel @Inject constructor(
     private val repository: AliasRepository,
     private val deleteAliasUseCase: DeleteAliasUseCase,
     private val exportAliasUseCase: ExportAliasUseCase,
+    private val deepLinkLauncher: DeepLinkLauncher,
     @ApplicationContext private val context: Context,
 ) : ViewModel() {
 
@@ -42,6 +46,10 @@ class AliasDetailViewModel @Inject constructor(
     private val _clipboardTimeoutMs = MutableStateFlow(30_000L)
 
     init {
+        loadAlias()
+    }
+
+    private fun loadAlias() {
         viewModelScope.launch {
             _alias.value = repository.getAliasById(aliasId)
         }
@@ -99,4 +107,24 @@ class AliasDetailViewModel @Inject constructor(
     }
 
     fun dismissExportPath() { _exportedPath.value = null }
+
+    // --- Setup assistant ---
+
+    fun markAccountCreated(accountId: String) {
+        viewModelScope.launch {
+            repository.updateAccountStatus(accountId, AccountStatus.CREATED, System.currentTimeMillis())
+            loadAlias()
+        }
+    }
+
+    fun markAccountSkipped(accountId: String) {
+        viewModelScope.launch {
+            repository.updateAccountStatus(accountId, AccountStatus.SKIPPED, null)
+            loadAlias()
+        }
+    }
+
+    fun launchSignup(account: Account) {
+        deepLinkLauncher.launchSignup(account)
+    }
 }

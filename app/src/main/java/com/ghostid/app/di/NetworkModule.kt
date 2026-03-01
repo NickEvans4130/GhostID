@@ -1,11 +1,14 @@
 package com.ghostid.app.di
 
+import com.ghostid.app.data.network.MailTmService
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
 import javax.inject.Singleton
 
@@ -25,4 +28,19 @@ object NetworkModule {
                 }
             )
             .build()
+
+    @Provides
+    @Singleton
+    fun provideMailTmService(): MailTmService =
+        Retrofit.Builder()
+            .baseUrl("https://api.mail.tm/")
+            .addConverterFactory(GsonConverterFactory.create())
+            .client(
+                OkHttpClient.Builder()
+                    .connectTimeout(10, TimeUnit.SECONDS)
+                    .readTimeout(10, TimeUnit.SECONDS)
+                    .build()
+            )
+            .build()
+            .create(MailTmService::class.java)
 }

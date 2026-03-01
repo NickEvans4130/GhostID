@@ -6,7 +6,7 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 
 @Entity(
-    tableName = "accounts",
+    tableName = "temp_emails",
     foreignKeys = [ForeignKey(
         entity = AliasEntity::class,
         parentColumns = ["id"],
@@ -15,12 +15,11 @@ import androidx.room.PrimaryKey
     )],
     indices = [Index("aliasId")],
 )
-data class AccountEntity(
-    @PrimaryKey val id: String,
-    val aliasId: String,
-    val platformName: String,
-    val username: String,
-    val passwordEncrypted: String,
-    val status: String = "PENDING",
-    val accountCreatedAt: Long? = null,
+data class TempEmailEntity(
+    @PrimaryKey val aliasId: String,
+    val accountId: String,
+    val address: String,
+    val encryptedPassword: String,
+    val encryptedToken: String,
+    val tokenExpiresAt: Long = 0L,
 )

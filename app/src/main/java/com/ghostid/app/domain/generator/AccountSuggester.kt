@@ -1,6 +1,7 @@
 package com.ghostid.app.domain.generator
 
 import com.ghostid.app.domain.model.Account
+import com.ghostid.app.domain.model.AccountStatus
 import com.ghostid.app.domain.model.AliasName
 import com.ghostid.app.domain.model.Platform
 import java.security.SecureRandom
@@ -24,6 +25,7 @@ class AccountSuggester @Inject constructor(
                 platform = platform,
                 username = generateUsername(platform, first, last, suffix, phoneNumber),
                 password = passwordGenerator.generate(),
+                status = if (platform.requiresPhone) AccountStatus.REQUIRES_PHONE else AccountStatus.PENDING,
             )
         }
     }

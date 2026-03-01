@@ -4,5 +4,6 @@
         <domain includeSubdomains="true">fakeface.rest</domain>
         <domain includeSubdomains="true">content.fakeface.rest</domain>
         <domain includeSubdomains="false">api.dicebear.com</domain>
+        <domain includeSubdomains="false">api.mail.tm</domain>
     </domain-config>
 </network-security-config>
